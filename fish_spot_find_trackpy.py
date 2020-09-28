@@ -65,35 +65,3 @@ def trackpy_spots_to_img(img_shape, locate_df):
         ] += 9
     return out
 
-from photutils.detection import DAOStarFinder
-from photutils.utils import NoDetectionsWarning
-from skimage.morphology import binary_dilation, disk
-import pandas as pd
-
-def photutils_daostarfinder(img, thresholds, fwhms):
-    mask = np.zeros_like(img, dtype=np.bool)
-    results = []
-
-    for t, f in zip(thresholds, fwhms):
-        dao = DAOStarFinder(threshold=t, fwhm=f)
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore', category=NoDetectionsWarning
-            )
-            dao_dataframe = dao.find_stars(img, mask=mask)
-        if dao_dataframe is not None:
-            dao_dataframe = dao_dataframe.to_pandas()
-            results += [dao_dataframe]
-        
-            _mask = np.zeros_like(img, dtype=np.bool)
-            _mask[
-                np.round(dao_dataframe.ycentroid).astype(np.int),
-                np.round(dao_dataframe.xcentroid).astype(np.int)
-            ] = True
-            # fwhm ~= 2.355 sigma
-            mask += binary_dilation(_mask, selem=disk(2*f))
-    
-    if len(results) > 0:
-        return pd.concat(results)
-    else:
-        return pd.DataFrame(columns=['xcentroid', 'ycentroid'])
