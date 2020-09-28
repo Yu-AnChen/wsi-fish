@@ -1,4 +1,3 @@
-
 import sys
 import argparse
 
@@ -10,8 +9,9 @@ import pandas as pd
 from joblib import Parallel, delayed
 from fish_spot_find_trackpy import (
     locate_with_mask, gmm_filter_spots,
-    trackpy_spots_to_img, photutils_daostarfinder
+    trackpy_spots_to_img
 )
+from fish_spot_find_photutils import photutils_daostarfinder
 
 parser = argparse.ArgumentParser()
 
@@ -61,14 +61,13 @@ for file_path in file_paths[:]:
 
         img_shape = img.shape
         img_dtype = img.dtype
-        img, window_mask = rowit.view_as_windows_overlap(
-            img, block_size, overlap_size, return_padding_mask=True
-        )
-        window_view_shape = img.shape
-        img = img.reshape(-1, block_size, block_size)
+
+        wv_settings = rowit.WindowView(img_shape, block_size, overlap_size)
+        img = wv_settings.window_view_list(img)
+        window_mask = wv_settings.padding_mask()
+        
         if i == 0:
             print('        number of windows:', img.shape[0])
-        window_mask = window_mask.reshape(-1, block_size, block_size)
 
         print(
             '       ',
@@ -87,6 +86,7 @@ for file_path in file_paths[:]:
 
         elif method == 'photutils':
             min_peak_int = np.median(np.percentile(img, 95, axis=(1, 2)))
+            print('spot peak threshold:', min_peak_int*np.exp(1))
             spot_results = Parallel(n_jobs=8, verbose=0)(
                 delayed(photutils_daostarfinder)(
                     # use two-pass approach to catch out-of-focus spots
@@ -95,12 +95,11 @@ for file_path in file_paths[:]:
             )
             y, x = 'ycentroid', 'xcentroid'
 
-        img = rowit.reconstruct_from_windows(
-            img.reshape(window_view_shape),
-            block_size, overlap_size, img_shape
-        )
+        img = wv_settings.reconstruct(img)
 
-        window_position_ref = np.arange(len(spot_results)).reshape(window_view_shape[:2])
+        window_position_ref = np.arange(len(spot_results)).reshape(
+            wv_settings.window_view_shape[:2]
+        )
         for idx, df in enumerate(spot_results):
             r, c = np.where(window_position_ref == idx)
             step_size = block_size - overlap_size
@@ -108,7 +107,7 @@ for file_path in file_paths[:]:
             df.loc[:, x] += (c*step_size - (0.5*overlap_size*(c != 0)))
 
         full_result = pd.concat(spot_results)
-
+        
         if method == 'trackpy':
             full_result.drop(columns=['mass', 'ep'], inplace=True)
 
@@ -153,37 +152,3 @@ for file_path in file_paths[:]:
             )
 
     print()
-
-
-# try:
-#     plot_debug
-# except NameError:
-#     plot_debug = False
-
-# if plot_debug is True:
-#     from matplotlib import pyplot as plt
-
-#     plt.figure()
-#     plt.scatter(
-#         filtered.x, filtered.y, 
-#         marker='.', linewidths=0, s=8, 
-#         c=np.log(filtered.signal)
-#     )
-#     plt.gca().set_aspect('equal')
-#     plt.gca().invert_yaxis()
-
-#     r_s, r_e, c_s, c_e = [
-#         6000, 15000, 
-#         6000, 10000
-#     ]
-#     roi = filtered[
-#         filtered.x.between(c_s, c_e) & filtered.y.between(r_s, r_e)
-#     ]
-#     plt.figure()
-#     plt.imshow(img[r_s:r_e, c_s:c_e], cmap='gray', vmax=2*min_peak_int)
-#     plt.scatter(
-#         roi.x-c_s, roi.y-r_s, 
-#         marker='.', linewidths=0,
-#         c=roi.signal > np.exp(np.log(min_peak_int) + 2), 
-#         s=(roi.raw_mass / (min_peak_int / 2))
-#     )
