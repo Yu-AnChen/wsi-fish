@@ -13,26 +13,43 @@ def main(argv=sys.argv):
     )
 
 
-    parser_small = subparsers.add_parser('small', help='small help')
-    parser_small.add_argument('image')
-    parser_small.add_argument('channel')
-    parser_small.add_argument('-x', '--center-x', type=float, default=None)
-    parser_small.add_argument('-y', '--center-y', type=float, default=None)
-    parser_small.add_argument('--threshold-bottom', dest='t_bottom', type=float, default=None)
-    parser_small.add_argument('--threshold-top', dest='t_top', type=float, default=None)
-    parser_small.add_argument('--threshold-num-steps', dest='num_t', type=int, default=3)
-    parser_small.add_argument('--fwhm-bottom', dest='f_bottom', type=float, default=2)
-    parser_small.add_argument('--fwhm-top', dest='f_top', type=float, default=10)
-    parser_small.add_argument('--fwhm-num-steps', dest='num_f', type=int, default=3)
+    parser_small = subparsers.add_parser('small', 
+        description='Try spot detection on a small portion of a channel of an image with a combination of minimum intensities (thresholds) and spot sizes (fwhms)')
+    parser_small.add_argument('image', 
+        help='an image file to be processed')
+    parser_small.add_argument('channel', 
+        help='a channel number in the image to process; numbering starts at 0')
+    parser_small.add_argument('-x', '--center-x', type=float, default=None, 
+        help='x coordinate of the center of the crop')
+    parser_small.add_argument('-y', '--center-y', type=float, default=None, 
+        help='y coordinate of the center of the crop')
+    parser_small.add_argument('--threshold-bottom', dest='t_bottom', type=float, default=None, 
+        help='lower limit of the thresholds to try')
+    parser_small.add_argument('--threshold-top', dest='t_top', type=float, default=None, 
+        help='upper limit of the thresholds to try')
+    parser_small.add_argument('--threshold-num-steps', dest='num_t', type=int, default=3, 
+        help='number of thresholds to try between the lower and upper threshold limits')
+    parser_small.add_argument('--fwhm-bottom', dest='f_bottom', type=float, default=2, 
+        help='lower limit of the fwhms to try; small spots are better detected with small fwhms')
+    parser_small.add_argument('--fwhm-top', dest='f_top', type=float, default=10, 
+        help='upper limit of the fwhms to try; small spots are better detected with small fwhms')
+    parser_small.add_argument('--fwhm-num-steps', dest='num_f', type=int, default=3, 
+        help='number of fwhms to try between the lower and upper fwhm limits')
     parser_small.set_defaults(func=small_wrapper)
 
 
-    parser_large = subparsers.add_parser('large', help='large help')
-    parser_large.add_argument('image')
-    parser_large.add_argument('channel')
-    parser_large.add_argument('-n', '--nucleus-channel', dest='nucleus_ch', type=int, default=None)
-    parser_large.add_argument('-t', '--thresholds', nargs='+', type=float)
-    parser_large.add_argument('-f', '--fwhms', nargs='+', type=float)
+    parser_large = subparsers.add_parser('large',
+        description='Test the choosen minimum intensities (thresholds) and spot sizes (fwhms) on a channel of a large image')
+    parser_large.add_argument('image',
+        help='an image file to be processed')
+    parser_large.add_argument('channel', 
+        help='a channel number in the image to process; numbering starts at 0')
+    parser_large.add_argument('-n', '--nucleus-channel', dest='nucleus_ch', type=int, default=None,
+        help='a channel number of the nuclear staining channel, optional; numbering starts at 0')
+    parser_large.add_argument('-t', '--thresholds', nargs='+', type=float,
+        help='a series of thresholds; number of thresholds must equal to number of fwhms')
+    parser_large.add_argument('-f', '--fwhms', nargs='+', type=float,
+        help='a series of fwhms; number of thresholds must equal to number of fwhms')
     parser_large.set_defaults(func=large_wrapper)
 
     args = parser.parse_args(argv[1:])
