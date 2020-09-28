@@ -82,20 +82,21 @@ def process_whole_slide(
         df.loc[:, x] += (c*step_size - (0.5*overlap_size*(c != 0)))
 
     full_result = pd.concat(spot_results)
-    
-    spot_img_positions = full_result[[y, x]]
-    if filter_sharpness:
-        spot_img_positions = full_result.query('sharpness > 0.5')[[y, x]]
-
-    y_limit, x_limit = np.array(img_shape) - 1
-
-    spot_img_positions = (spot_img_positions
-        .transform(np.round).astype('int')
-        .query('({} >= 0) & ({} <= @y_limit)'.format(y, y))
-        .query('({} >= 0) & ({} <= @x_limit)'.format(x, x))
-    )
-
     out_img = np.zeros(img_shape, dtype=np.uint8)
-    out_img[spot_img_positions[y], spot_img_positions[x]] += 1
-    
+
+    if not full_result.empty:
+        spot_img_positions = full_result[[y, x]]
+        if filter_sharpness:
+            spot_img_positions = full_result.query('sharpness > 0.5')[[y, x]]
+
+        y_limit, x_limit = np.array(img_shape) - 1
+
+        spot_img_positions = (spot_img_positions
+            .transform(np.round).astype('int')
+            .query('({} >= 0) & ({} <= @y_limit)'.format(y, y))
+            .query('({} >= 0) & ({} <= @x_limit)'.format(x, x))
+        )
+
+        out_img[spot_img_positions[y], spot_img_positions[x]] += 1
+        
     return full_result, out_img
