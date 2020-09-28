@@ -1,12 +1,11 @@
-import os
-import sys
 import warnings
 from skimage.morphology import binary_dilation, disk
 import pandas as pd
 import numpy as np
 from astropy.utils.exceptions import AstropyWarning
 warnings.simplefilter('ignore', category=AstropyWarning)
-with open(os.devnull, "w") as sys.stdout:
+import contextlib
+with contextlib.redirect_stdout(None):
     from photutils.detection import DAOStarFinder
     from photutils.utils import NoDetectionsWarning
 
