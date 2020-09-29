@@ -80,7 +80,8 @@ def small_wrapper(args):
         args.t_bottom = np.percentile(img, 95)
     if args.t_top is None: 
         args.t_top = np.percentile(img, 99)
-    
+    if args.t_bottom < np.percentile(img, 0.01):
+        print('--threshold-bottom is smaller than 0.01 percentile of the image, this will often increase runtime and generate bad results.')
     find_parameters.try_small_image(
         img, 
         args.t_bottom, args.t_top, args.num_t,
