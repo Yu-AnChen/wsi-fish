@@ -55,6 +55,7 @@ def main(argv=sys.argv):
     args = parser.parse_args(argv[1:])
     if len(argv) == 1:
         args = None
+    print()
     return args.func(args)
 
 def small_wrapper(args):
@@ -65,7 +66,7 @@ def small_wrapper(args):
             )
         )
         return 1
-
+    print('loading channel {} of {}\n'.format(args.channel, args.image))
     img = find_parameters.load_channel_of_image(args.image, args.channel)
     if args.center_x is None:
         args.center_x = img.shape[1] * 0.5

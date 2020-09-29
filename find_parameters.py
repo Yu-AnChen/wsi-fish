@@ -6,6 +6,7 @@ import skimage.io
 import itertools
 from joblib import Parallel, delayed
 import numpy as np
+import pandas as pd
 
 
 def load_channel_of_image(img_path, channel=0):
@@ -33,6 +34,10 @@ def try_small_image(
         min_fwhm, max_fwhm, num_of_steps_fwhm
     )
     combinations = list(itertools.product(fwhms, thresholds))
+    print(
+        'testing following combinations\n', 
+        pd.DataFrame(combinations, columns=['fwhm', 'threshold'])
+    )
     results = Parallel(n_jobs=-3, verbose=0)(
         delayed(photutils_daostarfinder)(img, [t], [f]) 
         for f, t in combinations
