@@ -26,9 +26,17 @@ def photutils_daostarfinder(img, thresholds, fwhms):
             results += [dao_dataframe]
         
             _mask = np.zeros_like(img, dtype=np.bool)
+            
+            y_limit, x_limit = np.array(img.shape) - 1
+            spot_mask_positions = (dao_dataframe
+                .loc[:, ['xcentroid', 'ycentroid']]
+                .transform(np.round).astype('int')
+                .query('({y} >= 0) & ({y} <= @y_limit)'.format(y='ycentroid'))
+                .query('({x} >= 0) & ({x} <= @x_limit)'.format(x='xcentroid'))
+            )
             _mask[
-                np.round(dao_dataframe.ycentroid).astype(np.int),
-                np.round(dao_dataframe.xcentroid).astype(np.int)
+                spot_mask_positions.ycentroid,
+                spot_mask_positions.xcentroid
             ] = True
             # fwhm ~= 2.355 sigma
             mask += binary_dilation(_mask, selem=disk(2*f))
