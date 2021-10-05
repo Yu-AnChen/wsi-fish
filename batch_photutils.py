@@ -46,7 +46,7 @@ def main(argv=sys.argv):
             skimage.io.imsave(
                 str(out_dir / 'fish_photutils-{}.tif'.format(img_name)),
                 out_img,
-                bigtiff=True, append=append, 
+                bigtiff=True, append=append, metadata=None,
                 tile=(1024, 1024), photometric='minisblack',
                 check_contrast=False
             )
